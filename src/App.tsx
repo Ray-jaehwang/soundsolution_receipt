@@ -7,7 +7,6 @@ import {
   LayoutDashboard, 
   Trash2,
   Download,
-  Key,
   Loader2,
   FileText,
   Wallet,
@@ -40,7 +39,7 @@ function App() {
   const [isImgHovered, setIsImgHovered] = useState(false);
   
   // OCR & API State
-  const [apiKey, setApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+  const [apiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key') || '');
   const [isExtracting, setIsExtracting] = useState(false);
   
   const [docDate, setDocDate] = useState(() => localStorage.getItem('expense_workspace_docDate') || new Date().toISOString().split('T')[0]);
@@ -58,10 +57,7 @@ function App() {
     localStorage.setItem('expense_workspace_rowHeight', rowHeight.toString());
   }, [receipts, docDate, department, manager, itemsPerPage, rowHeight]);
 
-  const saveApiKey = (key: string) => {
-    setApiKey(key);
-    localStorage.setItem('gemini_api_key', key);
-  };
+
 
   // Convert File to Base64
   const fileToGenerativePart = async (file: File) => {
@@ -768,17 +764,8 @@ function App() {
           </h1>
           
           <div className="flex-row">
-            {/* API Key Input */}
-            <div className="flex-row" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '4px 12px' }}>
-              <Key size={16} color="var(--text-secondary)" />
-              <input 
-                type="password"
-                placeholder="Gemini API Key 입력..."
-                value={apiKey}
-                onChange={(e) => saveApiKey(e.target.value)}
-                style={{ background: 'transparent', border: 'none', padding: '8px', color: 'var(--text-primary)', outline: 'none', width: '200px' }}
-              />
-            </div>
+            {/* API Key Input has been removed from UI for security/cleanliness. 
+                Configure it via .env file (VITE_GEMINI_API_KEY) */}
           </div>
         </header>
 
