@@ -21,6 +21,7 @@ interface Receipt {
   amount: number;
   category: string;
   type: 'expense' | 'income';
+  imageUrl?: string;
 }
 
 function App() {
@@ -58,6 +59,33 @@ function App() {
   }, [receipts, docDate, department, manager, itemsPerPage, rowHeight]);
 
 
+
+  // Image resizing to prevent localStorage quota limit
+  const resizeImage = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          let width = img.width;
+          let height = img.height;
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Convert File to Base64
   const fileToGenerativePart = async (file: File) => {
@@ -134,13 +162,16 @@ function App() {
 
           const parsedData = JSON.parse(cleanJson);
           
+          const base64Image = await resizeImage(file);
+          
           newReceipts.push({
             id: `rec-${Date.now()}-${i}`,
             date: parsedData.date || new Date().toISOString().split('T')[0],
             store: parsedData.store || '알 수 없는 가게',
             amount: Number(parsedData.amount) || 0,
             category: parsedData.category || '기타',
-            type: parsedData.type || 'expense'
+            type: parsedData.type || 'expense',
+            imageUrl: base64Image
           });
           successCount++;
         } catch(err) {
@@ -629,6 +660,30 @@ function App() {
                 </div>
               );
             })}
+            
+            {/* 영수증 증빙철 영역 */}
+            {expenses.some(r => r.imageUrl) && (
+              <div className="preview-paper evidence-section" style={{ marginTop: '40px', pageBreakBefore: 'always' }}>
+                <h2 style={{ textAlign: 'center', fontSize: '30px', fontWeight: 'bold', borderBottom: '3px solid black', paddingBottom: '20px', marginBottom: '40px', letterSpacing: '10px' }}>
+                  영 수 증 증 빙 철
+                </h2>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                  {expenses.filter(r => r.imageUrl).map((r, idx) => (
+                    <div key={'evidence-'+r.id+'-'+idx} style={{ border: '2px solid black', padding: '16px', background: 'white', breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                      <div style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 'bold', borderBottom: '1px dashed #999', paddingBottom: '12px', lineHeight: '1.6' }}>
+                        <div>■ 일자 : {r.date}</div>
+                        <div>■ 사용처 : {r.store} ({r.category})</div>
+                        <div>■ 결제금액 : {r.amount.toLocaleString()}원</div>
+                      </div>
+                      <div style={{ height: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                        <img src={r.imageUrl} alt="receipt" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
