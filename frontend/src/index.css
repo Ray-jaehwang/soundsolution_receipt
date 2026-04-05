@@ -268,14 +268,14 @@ input:focus, select:focus, textarea:focus {
     box-shadow: none;
     border-radius: 0;
   }
-  /* 지출결의서: 페이지별 테이블이 페이지 경계를 넘어가지 않도록 */
-  .page-break {
+  /* 지출결의서: 행 단위 분할 방지 (테이블 전체 avoid는 하지 않음) */
+  .page-break tr {
     page-break-inside: avoid;
     break-inside: avoid;
   }
-  .page-break > table {
-    page-break-inside: avoid;
-    break-inside: avoid;
+  /* 테이블 헤더는 각 페이지 상단에 반복 */
+  .page-break thead {
+    display: table-header-group;
   }
   /* 증빙철: 카드가 페이지 경계를 가로지르지 않도록 */
   .evidence-section > div > div {
