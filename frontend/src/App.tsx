@@ -507,6 +507,26 @@ function App() {
     }
   };
 
+  // 현금 내역 수동 추가 (법인카드 모드 전용)
+  const addCashReceipt = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const newReceipt: Receipt = {
+      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+      date: today,
+      store: '',
+      amount: 0,
+      category: '',
+      type: 'income',
+    };
+    setReceipts(prev => [...prev, newReceipt]);
+  };
+
+  const togglePaymentType = (id: string) => {
+    setReceipts(prev => prev.map(r =>
+      r.id === id ? { ...r, type: r.type === 'expense' ? 'income' : 'expense' } : r
+    ));
+  };
+
   // 빠른 추가 폼 (문서 미리보기용)
   const [quickAdd, setQuickAdd] = useState({ date: '', store: '', amount: '', note: '' });
   const addQuickReceipt = () => {
@@ -613,6 +633,11 @@ function App() {
             분석된 영수증 내역 <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>({receipts.length}건)</span>
           </h3>
           <div className="flex-row" style={{ gap: '12px' }}>
+            {workflowMode === 'corp' && (
+              <button className="btn-secondary" onClick={addCashReceipt} style={{ background: '#10b981', color: 'white', borderColor: '#10b981' }}>
+                <Wallet size={16} /> 현금 내역 추가
+              </button>
+            )}
             <label className="btn-secondary" style={{ cursor: 'pointer', background: '#3b82f6', color: 'white', borderColor: '#3b82f6', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: 'var(--radius-md)', fontWeight: 600 }}>
               <Upload size={16} /> 백업파일 불러오기
               <input type="file" accept=".exp,.json" onChange={loadWorkspace} style={{ display: 'none' }} />
@@ -675,29 +700,39 @@ function App() {
                       {r.type === 'expense' ? (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                           <span style={{marginRight: '2px'}}>₩</span>
-                          <input 
-                            type="text" 
-                            value={r.amount > 0 ? r.amount.toLocaleString() : ''} 
+                          <input
+                            type="text"
+                            value={r.amount > 0 ? r.amount.toLocaleString() : ''}
                             onChange={(e) => updateReceipt(r.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
                             className="editable-cell"
                             style={{ textAlign: 'right', fontWeight: 600, width: '100px' }}
                           />
                         </div>
-                      ) : ''}
+                      ) : (
+                        <button onClick={() => togglePaymentType(r.id)} title="법인카드로 전환"
+                          style={{ background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 10px', fontSize: '11px', borderRadius: '4px' }}>
+                          카드로 →
+                        </button>
+                      )}
                     </td>
                     <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600 }}>
                       {r.type !== 'expense' ? (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                           <span style={{marginRight: '2px'}}>₩</span>
-                          <input 
-                            type="text" 
-                            value={r.amount > 0 ? r.amount.toLocaleString() : ''} 
+                          <input
+                            type="text"
+                            value={r.amount > 0 ? r.amount.toLocaleString() : ''}
                             onChange={(e) => updateReceipt(r.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
                             className="editable-cell"
                             style={{ textAlign: 'right', fontWeight: 600, width: '100px' }}
                           />
                         </div>
-                      ) : ''}
+                      ) : (
+                        <button onClick={() => togglePaymentType(r.id)} title="현금으로 전환"
+                          style={{ background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 10px', fontSize: '11px', borderRadius: '4px' }}>
+                          ← 현금으로
+                        </button>
+                      )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <button 
@@ -723,9 +758,12 @@ function App() {
   );
 
   const renderPreview = () => {
-    const expenses = receipts.filter(r => r.type === 'expense')
+    // 법인카드(expense) + 현금(income) 모두 표시, 날짜순 정렬
+    const expenses = receipts
       .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    const totalAmount = expenses.reduce((sum, r) => sum + r.amount, 0);
+    const cardTotal = expenses.filter(r => r.type === 'expense').reduce((sum, r) => sum + r.amount, 0);
+    const cashTotal = expenses.filter(r => r.type === 'income').reduce((sum, r) => sum + r.amount, 0);
+    const totalAmount = cardTotal + cashTotal;
     
     // 한국어 표기법 변환기 (십/백/천/만 앞의 "일" 생략)
     const numberToKoreanAmt = (num: number) => {
@@ -868,8 +906,8 @@ function App() {
                           <td style={{textAlign: 'center'}}>{r.date}</td>
                           <td style={{textAlign: 'left', paddingLeft: '12px'}}>{r.store}</td>
                           <td colSpan={4} style={{textAlign: 'left', paddingLeft: '12px'}}>{r.category}</td>
-                          <td style={{textAlign: 'right', paddingRight: '12px'}}>{r.amount.toLocaleString()}</td>
-                          <td></td>
+                          <td style={{textAlign: 'right', paddingRight: '12px'}}>{r.type === 'expense' ? r.amount.toLocaleString() : ''}</td>
+                          <td style={{textAlign: 'right', paddingRight: '12px'}}>{r.type === 'income' ? r.amount.toLocaleString() : ''}</td>
                         </tr>
                       ))}
                       {emptyRows.map((_, i) => (
@@ -881,15 +919,15 @@ function App() {
                         <td>소 계</td>
                         <td></td>
                         <td colSpan={4}></td>
-                        <td style={{textAlign: 'right', paddingRight: '12px'}}>{totalAmount.toLocaleString()}</td>
-                        <td style={{textAlign: 'right', paddingRight: '12px'}}>0</td>
+                        <td style={{textAlign: 'right', paddingRight: '12px'}}>{cardTotal.toLocaleString()}</td>
+                        <td style={{textAlign: 'right', paddingRight: '12px'}}>{cashTotal.toLocaleString()}</td>
                       </tr>
                       <tr style={{background: '#d9d9d9', height: '33px', fontWeight: 'bold'}}>
                         <td className="border-thick-top">합 계</td>
                         <td className="border-thick-top"></td>
                         <td colSpan={4} className="border-thick-top"></td>
-                        <td className="border-thick-top" style={{textAlign: 'right', paddingRight: '12px', fontSize: '15px'}}>{totalAmount.toLocaleString()}</td>
-                        <td className="border-thick-top"></td>
+                        <td className="border-thick-top" style={{textAlign: 'right', paddingRight: '12px', fontSize: '15px'}}>{cardTotal.toLocaleString()}</td>
+                        <td className="border-thick-top" style={{textAlign: 'right', paddingRight: '12px', fontSize: '15px'}}>{cashTotal.toLocaleString()}</td>
                       </tr>
                       <tr style={{ height: '125px' }}>
                         <td colSpan={8} style={{ border: 'none', borderTop: '1px solid black', verticalAlign: 'middle', padding: '0 20px' }}>
