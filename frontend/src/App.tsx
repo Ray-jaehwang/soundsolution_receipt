@@ -1,13 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
-import * as XLSX from 'xlsx';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { 
-  FileSpreadsheet, 
+import {
   Image as ImageIcon,
-  LayoutDashboard, 
+  LayoutDashboard,
   Trash2,
-  Download,
   Loader2,
   FileText,
   Wallet,
@@ -224,8 +221,6 @@ function App() {
     } catch { return []; }
   });
 
-  const [isHovered, setIsHovered] = useState(false);
-  const [templateData, setTemplateData] = useState<ArrayBuffer | null>(null);
   const [isImgHovered, setIsImgHovered] = useState(false);
   
   // OCR & API State
@@ -330,7 +325,6 @@ function App() {
       const today = new Date();
       setSettlementMonth(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
     }
-    setTemplateData(null);
     setActiveTab('dashboard');
     quotaAlertShownRef.current = false;
     // 상태 재로드 완료: 이제부터 autosave 활성화
@@ -506,109 +500,6 @@ function App() {
   };
 
   // Export to Excel (사용자가 올바른 지출결의서 템플릿 사용)
-  const exportToExcel = async () => {
-    if (receipts.length === 0) {
-      alert('다운로드할 데이터가 없습니다.');
-      return;
-    }
-
-    try {
-      let arrayBuffer: ArrayBuffer;
-      if (templateData) {
-        // 사용자가 직접 등록한 템플릿 양식이 있는 경우
-        arrayBuffer = templateData;
-      } else {
-        // 없는 경우 기본 내장 템플릿(public) 사용
-        const response = await fetch('/template_2026.xls');
-        if (!response.ok) {
-          throw new Error('기본 템플릿 파일을 찾을 수 없습니다. 좌측 메뉴에서 양식을 직접 업로드 해주세요.');
-        }
-        arrayBuffer = await response.arrayBuffer();
-      }
-      
-      const wb = XLSX.read(arrayBuffer, { type: 'array' });
-      const templateWs = wb.Sheets['지출결의서'];
-
-      if (!templateWs) {
-        alert('양식 파일에서 "지출결의서" 시트를 찾지 못했습니다.');
-        return;
-      }
-
-      const START_ROW = 8;
-      const ROWS_PER_SHEET = 13;
-
-      const expenses = receipts.filter(r => r.type === 'expense')
-        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      const totalAmount = expenses.reduce((sum, r) => sum + r.amount, 0);
-
-      // 13건 단위로 쪼개서 시트 생성 (영수증이 많으면 다음 시트로 이어서 출력)
-      const chunks: typeof expenses[] = [];
-      for (let i = 0; i < expenses.length; i += ROWS_PER_SHEET) {
-        chunks.push(expenses.slice(i, i + ROWS_PER_SHEET));
-      }
-      if (chunks.length === 0) chunks.push([]);
-
-      const docYear = docDate.split('-')[0] || '';
-      const docMonth = docDate.split('-')[1] || '';
-      const docDay = docDate.split('-')[2] || '';
-      const footerText = `위 금액을 청구 하오니 지급 바랍니다.\n\n                                              ${docYear} 년       ${docMonth} 월       ${docDay} 일\n\n                                                                                ${manager}               (인)`;
-
-      // 원본 템플릿 시트를 워크북에서 제거 후, 페이지별로 복제하여 추가
-      wb.SheetNames = wb.SheetNames.filter(name => name !== '지출결의서');
-      delete wb.Sheets['지출결의서'];
-
-      chunks.forEach((chunk, pageIdx) => {
-        const ws = JSON.parse(JSON.stringify(templateWs));
-
-        XLSX.utils.sheet_add_aoa(ws, [[docDate]], { origin: { r: 1, c: 1 } });
-        XLSX.utils.sheet_add_aoa(ws, [[department]], { origin: { r: 2, c: 1 } });
-        XLSX.utils.sheet_add_aoa(ws, [[manager]], { origin: { r: 3, c: 1 } });
-
-        chunk.forEach((receipt, idx) => {
-          const row = START_ROW + idx;
-          XLSX.utils.sheet_add_aoa(ws, [[receipt.date]], { origin: { r: row, c: 0 } });
-          XLSX.utils.sheet_add_aoa(ws, [[receipt.store]], { origin: { r: row, c: 1 } });
-          XLSX.utils.sheet_add_aoa(ws, [[receipt.category]], { origin: { r: row, c: 2 } });
-          XLSX.utils.sheet_add_aoa(ws, [[receipt.amount]], { origin: { r: row, c: 6 } });
-        });
-
-        // 각 페이지에 전체 합계(grand total) 표기
-        XLSX.utils.sheet_add_aoa(ws, [[totalAmount]], { origin: { r: 21, c: 6 } });
-        XLSX.utils.sheet_add_aoa(ws, [[totalAmount]], { origin: { r: 22, c: 6 } });
-        XLSX.utils.sheet_add_aoa(ws, [[totalAmount]], { origin: { r: 3, c: 6 } });
-        XLSX.utils.sheet_add_aoa(ws, [[`일금 ${totalAmount.toLocaleString()} 원정`]], { origin: { r: 3, c: 1 } });
-        XLSX.utils.sheet_add_aoa(ws, [[footerText]], { origin: { r: 24, c: 0 } });
-
-        const sheetName = chunks.length === 1 ? '지출결의서' : `지출결의서_${pageIdx + 1}`;
-        wb.SheetNames.push(sheetName);
-        wb.Sheets[sheetName] = ws;
-      });
-
-      XLSX.writeFile(wb, `내_지출결의서정산_${docDate}.xlsx`);
-
-    } catch (e: unknown) {
-      console.error(e);
-      const msg = e instanceof Error ? e.message : String(e);
-      alert(`엑셀 내보내기 실패: ${msg}`);
-    }
-  };
-
-  // Upload Template
-  const handleTemplateUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const data = event.target?.result as ArrayBuffer;
-      setTemplateData(data);
-      alert('기본 양식(템플릿)이 등록되었습니다! 이제 엑셀로 내보낼 때 이 양식이 사용됩니다.');
-    };
-    reader.readAsArrayBuffer(file);
-    e.target.value = ''; // Reset input
-  };
-
   const clearData = () => {
     if(confirm('모든 데이터를 삭제하시겠습니까?')) {
       setReceipts([]);
