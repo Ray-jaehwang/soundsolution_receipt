@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { LogoutButton } from './AuthGate';
@@ -1161,27 +1161,6 @@ function App() {
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>카드 번호 :</span> {r.cardNumber || ''}</div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>승인번호 :</span> {r.approvalNum || ''}</div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>가맹점 번호 :</span> {r.merchantNum || ''}</div>
-                  {r.items && r.items.length > 0 ? (
-                    <div style={{ marginTop: '6px', fontSize: '9px', lineHeight: '1.3' }}>
-                      <div style={{ borderTop: '1px solid #000', borderBottom: '1px solid #000', textAlign: 'center', fontWeight: 'bold', padding: '3px 0', marginBottom: '3px' }}>상품 내역</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: '0 6px', fontSize: '9px' }}>
-                        <div style={{ fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '2px' }}>상품명</div>
-                        <div style={{ fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '2px', textAlign: 'right' }}>단가</div>
-                        <div style={{ fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '2px', textAlign: 'center' }}>수량</div>
-                        <div style={{ fontWeight: 'bold', borderBottom: '1px solid #ccc', paddingBottom: '2px', textAlign: 'right' }}>금액</div>
-                        {r.items.map((item, ii) => (
-                          <Fragment key={ii}>
-                            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                            <div style={{ textAlign: 'right' }}>{item.unitPrice.toLocaleString()}</div>
-                            <div style={{ textAlign: 'center' }}>{item.qty}</div>
-                            <div style={{ textAlign: 'right' }}>{item.amount.toLocaleString()}</div>
-                          </Fragment>
-                        ))}
-                      </div>
-                    </div>
-                  ) : r.category ? (
-                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>사용 내역 :</span> {r.category}</div>
-                  ) : null}
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '8px', color:'#000', fontSize: '13px', textAlign: 'right' }}>
                     <span style={{fontWeight:'bold'}}>승인 금액 :</span> {r.amount.toLocaleString()} 원
                   </div>
