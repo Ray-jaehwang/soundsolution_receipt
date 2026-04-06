@@ -93,6 +93,7 @@ interface Receipt {
   approvalNum?: string;
   installment?: string;
   merchantNum?: string;
+  items?: { name: string; unitPrice: number; qty: number; amount: number }[];
 }
 
 interface DocumentSettingsPanelProps {
@@ -426,6 +427,10 @@ function App() {
         카드 영수증(매출전표)일 경우 나오는 카드명, 승인번호 등도 상세히 추출하세요. 
         모르는 값은 빈 문자열("")로 두세요.
 
+        [상품 내역 추출 규칙]
+        영수증에 상품명, 단가, 수량, 금액이 있으면 "items" 배열에 모두 추출하세요.
+        단가나 수량이 보이지 않으면 단가=금액, 수량=1로 넣으세요.
+
         반드시 아래 형식의 순수 JSON 문자열만 출력하세요.
 
         {
@@ -439,7 +444,10 @@ function App() {
           "cardNumber": "4703-****-****-1234 등",
           "approvalNum": "30066628 등 승인번호",
           "installment": "일시불 등",
-          "merchantNum": "12345678 등 가맹점 번호"
+          "merchantNum": "12345678 등 가맹점 번호",
+          "items": [
+            {"name": "상품명", "unitPrice": 단가숫자, "qty": 수량숫자, "amount": 금액숫자}
+          ]
         }
       `;
 
@@ -469,6 +477,7 @@ function App() {
             approvalNum: parsedData.approvalNum || '',
             installment: parsedData.installment || '일반승인',
             merchantNum: parsedData.merchantNum || '',
+            items: Array.isArray(parsedData.items) ? parsedData.items : [],
             imageUrl: base64Image
           });
           successCount++;
@@ -1207,7 +1216,18 @@ function App() {
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>카드 번호 :</span> {r.cardNumber || ''}</div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>승인번호 :</span> {r.approvalNum || ''}</div>
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>가맹점 번호 :</span> {r.merchantNum || ''}</div>
-                  {r.category && <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>사용 내역 :</span> {r.category}</div>}
+                  {r.items && r.items.length > 0 ? (
+                    <div style={{ marginTop: '6px', borderTop: '1px dashed #999', paddingTop: '4px', fontSize: '10px', lineHeight: '1.4' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>상품 내역</div>
+                      {r.items.map((item, ii) => (
+                        <div key={ii} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {item.name} {item.qty > 1 ? `×${item.qty}` : ''} {item.amount.toLocaleString()}원
+                        </div>
+                      ))}
+                    </div>
+                  ) : r.category ? (
+                    <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span style={{fontWeight:'bold', color:'#000'}}>사용 내역 :</span> {r.category}</div>
+                  ) : null}
                   <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '8px', color:'#000', fontSize: '13px', textAlign: 'right' }}>
                     <span style={{fontWeight:'bold'}}>승인 금액 :</span> {r.amount.toLocaleString()} 원
                   </div>
