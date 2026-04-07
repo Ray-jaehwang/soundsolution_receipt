@@ -499,6 +499,29 @@ function App() {
     setReceipts(prev => [...prev, newReceipt]);
   };
 
+  // 선택 삭제
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    if (selectedIds.size === receipts.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(receipts.map(r => r.id)));
+    }
+  };
+  const deleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`선택한 ${selectedIds.size}건을 삭제하시겠습니까?`)) return;
+    setReceipts(prev => prev.filter(r => !selectedIds.has(r.id)));
+    setSelectedIds(new Set());
+  };
+
   // 수동 내역 추가 (공통)
   const addManualReceipt = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -640,8 +663,13 @@ function App() {
             <button className="btn-secondary" onClick={saveWorkspace} style={{ background: '#3b82f6', color: 'white', borderColor: '#3b82f6' }}>
               <Save size={16} /> 현재 상황 백업저장
             </button>
+            {selectedIds.size > 0 && (
+              <button className="btn-secondary" onClick={deleteSelected} style={{ background: '#ef4444', color: 'white', borderColor: '#ef4444' }}>
+                <Trash2 size={16} /> 선택 삭제 ({selectedIds.size}건)
+              </button>
+            )}
             <button className="btn-secondary" onClick={clearData} style={{ color: '#ef4444' }}>
-              <Trash2 size={16} /> 원본 데이터 초기화
+              <Trash2 size={16} /> 전체 초기화
             </button>
           </div>
         </div>
@@ -651,6 +679,9 @@ function App() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th style={{ width: '36px', textAlign: 'center' }}>
+                    <input type="checkbox" checked={selectedIds.size === receipts.length && receipts.length > 0} onChange={toggleSelectAll} title="전체 선택" />
+                  </th>
                   <th>사용일자</th>
                   <th>사용처</th>
                   <th>사용내역</th>
@@ -661,7 +692,10 @@ function App() {
               </thead>
               <tbody>
                 {[...receipts].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => (
-                  <tr key={r.id}>
+                  <tr key={r.id} style={{ background: selectedIds.has(r.id) ? 'rgba(239, 68, 68, 0.08)' : undefined }}>
+                    <td style={{ textAlign: 'center', width: '36px' }}>
+                      <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleSelect(r.id)} />
+                    </td>
                     <td style={{ padding: '4px 8px', width: '15%' }}>
                       <input 
                         type="text" 
