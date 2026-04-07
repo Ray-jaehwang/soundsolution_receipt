@@ -1114,6 +1114,10 @@ function App() {
     const expenses = receipts
       .filter(r => r.type === 'expense')
       .filter(r => {
+        // 영수증을 읽어들인 항목만 표시 (카드정보 또는 상품내역이 있는 경우)
+        const hasCardInfo = !!(r.cardName || r.cardNumber || r.approvalNum || r.merchantNum);
+        const hasItems = !!(r.items && r.items.length > 0);
+        if (!hasCardInfo && !hasItems) return false;
         // 점심식대 모드: "연차" 포함 항목 제외
         if (workflowMode === 'lunch') {
           const text = `${r.store || ''} ${r.category || ''}`.toLowerCase();
