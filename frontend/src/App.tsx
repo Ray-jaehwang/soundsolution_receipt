@@ -828,8 +828,9 @@ function App() {
       return `일금 ${result}원정`;
     };
 
-    // 페이지 분할 없이 하나의 문서로 렌더링. itemsPerPage는 "최소 표시 행 수"로만 사용 (빈 칸 채우기용).
-    const MIN_ROWS = Math.max(itemsPerPage, expenses.length);
+    // A4 한 장에 헤더+푸터 제외 시 최대 ~13행. 데이터가 적으면 13행까지만 빈 행 채움.
+    const A4_MAX_ROWS = 13;
+    const MIN_ROWS = expenses.length <= A4_MAX_ROWS ? A4_MAX_ROWS : expenses.length;
     const pages = [expenses];
     const ITEMS_PER_PAGE = MIN_ROWS;
 
