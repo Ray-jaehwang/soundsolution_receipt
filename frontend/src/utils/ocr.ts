@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Receipt } from '../types';
 
+const GEMINI_API_KEY = 'AIzaSyBiFZk9Vz80hf-0qAdoab9Axa_h3S-7kbk';
+
 // Convert File to Base64
 export const fileToGenerativePart = async (file: File) => {
   const base64EncodedDataPromise = new Promise<string>((resolve, reject) => {
@@ -60,9 +62,8 @@ export const OCR_PROMPT = `
 
 export const runOcr = async (
   files: FileList,
-  apiKey: string,
 ): Promise<{ receipts: Receipt[]; successCount: number; failCount: number; lastError: unknown }> => {
-  const genAI = new GoogleGenerativeAI(apiKey.trim());
+  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const newReceipts: Receipt[] = [];

@@ -25,7 +25,6 @@ export function useReceiptWorkspace() {
   });
 
   const [isImgHovered, setIsImgHovered] = useState(false);
-  const [apiKey] = useState(import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key') || '');
   const [isExtracting, setIsExtracting] = useState(false);
 
   const [docDate, setDocDate] = useState(() => {
@@ -107,14 +106,9 @@ export function useReceiptWorkspace() {
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    if (!apiKey) {
-      alert('.env 파일에 VITE_GEMINI_API_KEY 설정이 없습니다. 입력 후 터미널을 다시 껐다 켜주세요.');
-      e.target.value = '';
-      return;
-    }
     try {
       setIsExtracting(true);
-      const { receipts: newReceipts, successCount, failCount, lastError } = await runOcr(files, apiKey);
+      const { receipts: newReceipts, successCount, failCount, lastError } = await runOcr(files);
       if (newReceipts.length > 0) setReceipts(prev => [...newReceipts, ...prev]);
       if (failCount > 0) {
         const errMsg = lastError instanceof Error ? lastError.message : String(lastError ?? '');
