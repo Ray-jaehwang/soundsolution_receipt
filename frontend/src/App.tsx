@@ -1,4 +1,3 @@
-import { LogoutButton } from './AuthGate';
 import { useReceiptWorkspace } from './hooks/useReceiptWorkspace';
 import Sidebar from './components/Sidebar';
 import DashboardView from './views/DashboardView';
@@ -46,7 +45,6 @@ function App() {
             {ws.activeTab === 'evidence' && '영수증 증빙철 미리보기'}
           </h1>
           <div className="flex-row">
-            <LogoutButton />
           </div>
         </header>
 
