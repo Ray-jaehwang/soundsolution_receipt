@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Receipt } from '../types';
 
-const GEMINI_API_KEY = 'AIzaSyBiFZk9Vz80hf-0qAdoab9Axa_h3S-7kbk';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 
 // Convert File to Base64
 export const fileToGenerativePart = async (file: File) => {
