@@ -8,99 +8,38 @@ import { saveWorkspace, parseWorkspaceFile } from '../utils/workspace';
 export type ActiveTab = 'dashboard' | 'preview' | 'evidence';
 
 export function useReceiptWorkspace() {
-  const [workflowMode, setWorkflowMode] = useState<WorkflowMode>(() =>
-    (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp'
-  );
-  const storagePrefix = `${workflowMode}_`;
-  const k = (name: string) => `${storagePrefix}expense_workspace_${name}`;
-
+  const [workflowMode, setWorkflowMode] = useState<WorkflowMode>('corp');
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
 
-  const [receipts, setReceipts] = useState<Receipt[]>(() => {
-    try {
-      const mode = (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp';
-      const saved = localStorage.getItem(`${mode}_expense_workspace_receipts`);
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
-
+  const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [isImgHovered, setIsImgHovered] = useState(false);
   const [isExtracting, setIsExtracting] = useState(false);
 
-  const [docDate, setDocDate] = useState(() => {
-    const mode = (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp';
-    return localStorage.getItem(`${mode}_expense_workspace_docDate`) || new Date().toISOString().split('T')[0];
-  });
-  const [department, setDepartment] = useState(() => {
-    const mode = (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp';
-    return localStorage.getItem(`${mode}_expense_workspace_department`) || WORKFLOW_DEFAULTS[mode].department;
-  });
-  const [manager, setManager] = useState(() => {
-    const mode = (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp';
-    return localStorage.getItem(`${mode}_expense_workspace_manager`) || WORKFLOW_DEFAULTS[mode].manager;
-  });
-  const [itemsPerPage, setItemsPerPage] = useState(() => {
-    const mode = (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp';
-    return parseInt(localStorage.getItem(`${mode}_expense_workspace_itemsPerPage`) || '17');
-  });
-  const [rowHeight, setRowHeight] = useState(() => {
-    const mode = (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp';
-    return parseInt(localStorage.getItem(`${mode}_expense_workspace_rowHeight`) || '33');
-  });
+  const [docDate, setDocDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [department, setDepartment] = useState(WORKFLOW_DEFAULTS['corp'].department);
+  const [manager, setManager] = useState(WORKFLOW_DEFAULTS['corp'].manager);
+  const [itemsPerPage, setItemsPerPage] = useState(17);
+  const [rowHeight, setRowHeight] = useState(33);
   const [settlementMonth, setSettlementMonth] = useState(() => {
-    const mode = (localStorage.getItem('workflow_mode') as WorkflowMode) || 'corp';
-    const saved = localStorage.getItem(`${mode}_expense_workspace_settlementMonth`);
-    if (saved) return saved;
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   });
 
-  const committedModeRef = useRef<WorkflowMode>(workflowMode);
-
-  useEffect(() => {
-    if (committedModeRef.current !== workflowMode) return;
-    try {
-      localStorage.setItem(k('receipts'), JSON.stringify(receipts));
-    } catch {
-      console.warn('localStorage quota exceeded');
-    }
-    localStorage.setItem(k('docDate'), docDate);
-    localStorage.setItem(k('department'), department);
-    localStorage.setItem(k('manager'), manager);
-    localStorage.setItem(k('itemsPerPage'), itemsPerPage.toString());
-    localStorage.setItem(k('rowHeight'), rowHeight.toString());
-    localStorage.setItem(k('settlementMonth'), settlementMonth);
-  }, [receipts, docDate, department, manager, itemsPerPage, rowHeight, settlementMonth]);
-
   const isInitialMountRef = useRef(true);
   useEffect(() => {
-    localStorage.setItem('workflow_mode', workflowMode);
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
-      committedModeRef.current = workflowMode;
       return;
     }
-    const p = `${workflowMode}_expense_workspace_`;
-    try {
-      const saved = localStorage.getItem(`${p}receipts`);
-      setReceipts(saved ? JSON.parse(saved) : []);
-    } catch {
-      setReceipts([]);
-    }
-    setDocDate(localStorage.getItem(`${p}docDate`) || new Date().toISOString().split('T')[0]);
-    setDepartment(localStorage.getItem(`${p}department`) || WORKFLOW_DEFAULTS[workflowMode].department);
-    setManager(localStorage.getItem(`${p}manager`) || WORKFLOW_DEFAULTS[workflowMode].manager);
-    setItemsPerPage(parseInt(localStorage.getItem(`${p}itemsPerPage`) || '17'));
-    setRowHeight(parseInt(localStorage.getItem(`${p}rowHeight`) || '33'));
-    const savedSM = localStorage.getItem(`${p}settlementMonth`);
-    if (savedSM) {
-      setSettlementMonth(savedSM);
-    } else {
-      const today = new Date();
-      setSettlementMonth(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
-    }
+    setReceipts([]);
+    setDocDate(new Date().toISOString().split('T')[0]);
+    setDepartment(WORKFLOW_DEFAULTS[workflowMode].department);
+    setManager(WORKFLOW_DEFAULTS[workflowMode].manager);
+    setItemsPerPage(17);
+    setRowHeight(33);
+    const today = new Date();
+    setSettlementMonth(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
     setActiveTab('dashboard');
-    committedModeRef.current = workflowMode;
   }, [workflowMode]);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {

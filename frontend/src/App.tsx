@@ -5,21 +5,6 @@ import PreviewView from './views/PreviewView';
 import LunchPreviewView from './views/LunchPreviewView';
 import EvidenceView from './views/EvidenceView';
 
-// One-time migration: unprefixed localStorage keys → 'corp_' prefix (법인카드 워크플로우로 이관)
-(function migrateWorkspaceKeys() {
-  if (typeof window === 'undefined') return;
-  if (localStorage.getItem('workflow_migration_v1')) return;
-  ['receipts', 'docDate', 'department', 'manager', 'itemsPerPage', 'rowHeight'].forEach(name => {
-    const oldKey = `expense_workspace_${name}`;
-    const newKey = `corp_expense_workspace_${name}`;
-    const val = localStorage.getItem(oldKey);
-    if (val !== null && localStorage.getItem(newKey) === null) {
-      localStorage.setItem(newKey, val);
-    }
-  });
-  localStorage.setItem('workflow_migration_v1', '1');
-})();
-
 function App() {
   const ws = useReceiptWorkspace();
   const print = () => ws.handlePrint(ws.activeTab, ws.workflowMode, ws.docDate, ws.settlementMonth);
