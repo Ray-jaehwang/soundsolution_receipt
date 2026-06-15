@@ -6,8 +6,8 @@ export const WORKFLOW_LABELS: Record<WorkflowMode, string> = {
 };
 
 export const WORKFLOW_DEFAULTS: Record<WorkflowMode, { department: string; manager: string }> = {
-  corp: { department: '설계팀', manager: '임종현 실장' },
-  lunch: { department: '설계팀', manager: '임종현 실장' },
+  corp: { department: '', manager: '' },
+  lunch: { department: '', manager: '' },
 };
 
 export interface Receipt {
