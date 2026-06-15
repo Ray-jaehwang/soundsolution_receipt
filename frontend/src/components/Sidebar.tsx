@@ -130,7 +130,7 @@ export default function Sidebar({
         >
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,.pdf"
             multiple
             onChange={onImageUpload}
             disabled={isExtracting}
@@ -151,8 +151,8 @@ export default function Sidebar({
           ) : (
             <>
               <ImageIcon size={32} style={{ margin: '0 auto 12px', color: isImgHovered ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
-              <h4 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-primary)' }}>📷 영수증 사진 분석</h4>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>클릭하여 사진 첨부 (AI 자동입력)</p>
+              <h4 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-primary)' }}>📷 영수증 사진 / PDF 분석</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>클릭하여 사진·PDF 첨부 (AI 자동입력)</p>
             </>
           )}
         </div>

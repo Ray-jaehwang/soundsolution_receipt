@@ -1,5 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { Receipt } from '../types';
+import { pdfToImageFiles } from './pdfUtils';
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 
@@ -71,9 +72,26 @@ export const runOcr = async (
   let failCount = 0;
   let lastError: unknown = null;
 
+  const expandedFiles: File[] = [];
   for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+      try {
+        const pages = await pdfToImageFiles(file);
+        expandedFiles.push(...pages);
+      } catch (err) {
+        console.error(`PDF 변환 오류 (${file.name}):`, err);
+        lastError = err;
+        failCount++;
+      }
+    } else {
+      expandedFiles.push(file);
+    }
+  }
+
+  for (let i = 0; i < expandedFiles.length; i++) {
     try {
-      const file = files[i];
+      const file = expandedFiles[i];
       const imagePart = await fileToGenerativePart(file);
 
       const result = await model.generateContent([OCR_PROMPT, imagePart]);
