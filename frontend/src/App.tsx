@@ -93,6 +93,7 @@ function App() {
             onAddQuickReceipt={ws.addQuickReceipt}
             onPrint={print}
             entertainmentRecords={ws.entertainmentRecords}
+            onUpdateEntertainmentRecord={ws.updateEntertainmentRecord}
           />
         )}
 

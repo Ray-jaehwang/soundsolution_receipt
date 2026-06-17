@@ -21,7 +21,7 @@ export const fileToGenerativePart = async (file: File) => {
   return {
     inlineData: {
       data: await base64EncodedDataPromise,
-      mimeType: file.type,
+      mimeType: file.type || 'image/jpeg',
     },
   };
 };
@@ -61,17 +61,17 @@ export const OCR_PROMPT = `
         }
       `;
 
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+
 export const runOcr = async (
   files: FileList,
 ): Promise<{ receipts: Receipt[]; successCount: number; failCount: number; lastError: unknown }> => {
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
   const newReceipts: Receipt[] = [];
   let successCount = 0;
   let failCount = 0;
   let lastError: unknown = null;
 
+  // PDF는 페이지별 이미지로 변환
   const expandedFiles: File[] = [];
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
@@ -90,10 +90,19 @@ export const runOcr = async (
   }
 
   for (let i = 0; i < expandedFiles.length; i++) {
+    // Gemini API Rate Limit 방지: 첫 번째 이후 호출 전 1.5초 대기
+    if (i > 0) {
+      await sleep(1500);
+    }
+
     try {
       const file = expandedFiles[i];
-      const imagePart = await fileToGenerativePart(file);
 
+      // 파일마다 새 API 인스턴스 생성 (SDK 내부 상태 문제 방지)
+      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+      const imagePart = await fileToGenerativePart(file);
       const result = await model.generateContent([OCR_PROMPT, imagePart]);
       const responseText = result.response.text().trim();
 
@@ -122,7 +131,7 @@ export const runOcr = async (
       });
       successCount++;
     } catch (err: unknown) {
-      console.error(`File ${i} OCR Error:`, err);
+      console.error(`File ${i + 1}/${expandedFiles.length} OCR Error:`, err);
       lastError = err;
       failCount++;
     }
