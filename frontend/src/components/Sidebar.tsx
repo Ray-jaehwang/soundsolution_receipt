@@ -7,7 +7,6 @@ import {
   Wallet,
   CreditCard,
   UtensilsCrossed,
-  Users,
 } from 'lucide-react';
 import type { WorkflowMode } from '../types';
 import { WORKFLOW_LABELS } from '../types';
@@ -36,7 +35,6 @@ export default function Sidebar({
   const modes: { key: WorkflowMode; icon: React.ReactNode }[] = [
     { key: 'lunch', icon: <UtensilsCrossed size={18} /> },
     { key: 'corp', icon: <CreditCard size={18} /> },
-    { key: 'entertainment', icon: <Users size={18} /> },
   ];
 
   return (
@@ -94,67 +92,63 @@ export default function Sidebar({
           <FileText size={18} /> 문서 미리보기
         </button>
 
-        {workflowMode !== 'entertainment' && (
-          <button
-            className="btn-secondary"
-            style={{
-              justifyContent: 'flex-start',
-              background: activeTab === 'evidence' ? 'rgba(255,255,255,0.05)' : 'transparent',
-              borderColor: activeTab === 'evidence' ? 'var(--border-highlight)' : 'transparent',
-            }}
-            onClick={() => setActiveTab('evidence')}
-          >
-            <ImageIcon size={18} /> 영수증 증빙철
-          </button>
-        )}
+        <button
+          className="btn-secondary"
+          style={{
+            justifyContent: 'flex-start',
+            background: activeTab === 'evidence' ? 'rgba(255,255,255,0.05)' : 'transparent',
+            borderColor: activeTab === 'evidence' ? 'var(--border-highlight)' : 'transparent',
+          }}
+          onClick={() => setActiveTab('evidence')}
+        >
+          <ImageIcon size={18} /> 영수증 증빙철
+        </button>
       </nav>
 
       {/* Input Areas */}
       <div className="flex-col" style={{ gap: '12px' }}>
-        {workflowMode !== 'entertainment' && (
-          <div
+        <div
+          style={{
+            border: `2px solid ${isImgHovered ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+            borderRadius: 'var(--radius-lg)',
+            padding: '24px',
+            textAlign: 'center',
+            position: 'relative',
+            transition: 'all 0.3s ease',
+            background: isImgHovered ? 'rgba(74, 222, 128, 0.05)' : 'var(--bg-secondary)',
+            cursor: isExtracting ? 'not-allowed' : 'pointer',
+          }}
+          onMouseOver={() => setIsImgHovered(true)}
+          onMouseOut={() => setIsImgHovered(false)}
+        >
+          <input
+            type="file"
+            accept="*/*"
+            multiple
+            onChange={onImageUpload}
+            disabled={isExtracting}
             style={{
-              border: `2px solid ${isImgHovered ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-              borderRadius: 'var(--radius-lg)',
-              padding: '24px',
-              textAlign: 'center',
-              position: 'relative',
-              transition: 'all 0.3s ease',
-              background: isImgHovered ? 'rgba(74, 222, 128, 0.05)' : 'var(--bg-secondary)',
-              cursor: isExtracting ? 'not-allowed' : 'pointer',
+              position: 'absolute',
+              top: 0, left: 0, width: '100%', height: '100%',
+              opacity: 0, cursor: isExtracting ? 'not-allowed' : 'pointer',
+              zIndex: 10,
             }}
-            onMouseOver={() => setIsImgHovered(true)}
-            onMouseOut={() => setIsImgHovered(false)}
-          >
-            <input
-              type="file"
-              accept="*/*"
-              multiple
-              onChange={onImageUpload}
-              disabled={isExtracting}
-              style={{
-                position: 'absolute',
-                top: 0, left: 0, width: '100%', height: '100%',
-                opacity: 0, cursor: isExtracting ? 'not-allowed' : 'pointer',
-                zIndex: 10,
-              }}
-            />
-            {isExtracting ? (
-              <div style={{ color: 'var(--accent-primary)' }}>
-                <div style={{ display: 'inline-block', animation: 'spin 1s linear infinite', marginBottom: '8px' }}>
-                  <Loader2 size={32} />
-                </div>
-                <h4 style={{ fontSize: '14px' }}>AI 분석 중...</h4>
+          />
+          {isExtracting ? (
+            <div style={{ color: 'var(--accent-primary)' }}>
+              <div style={{ display: 'inline-block', animation: 'spin 1s linear infinite', marginBottom: '8px' }}>
+                <Loader2 size={32} />
               </div>
-            ) : (
-              <>
-                <ImageIcon size={32} style={{ margin: '0 auto 12px', color: isImgHovered ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
-                <h4 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-primary)' }}>📷 영수증 사진 / PDF 분석</h4>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>클릭하여 사진·PDF 첨부 (AI 자동입력)</p>
-              </>
-            )}
-          </div>
-        )}
+              <h4 style={{ fontSize: '14px' }}>AI 분석 중...</h4>
+            </div>
+          ) : (
+            <>
+              <ImageIcon size={32} style={{ margin: '0 auto 12px', color: isImgHovered ? 'var(--accent-primary)' : 'var(--text-secondary)' }} />
+              <h4 style={{ fontSize: '14px', marginBottom: '4px', color: 'var(--text-primary)' }}>📷 영수증 사진 / PDF 분석</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>클릭하여 사진·PDF 첨부 (AI 자동입력)</p>
+            </>
+          )}
+        </div>
       </div>
     </aside>
   );

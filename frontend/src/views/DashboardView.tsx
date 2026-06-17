@@ -57,7 +57,7 @@ export default function DashboardView({
   entertainmentRecords,
   onUpdateEntertainmentRecord,
 }: DashboardViewProps) {
-  const linkedEntRecords = entertainmentRecords.filter(er => er.receiptId);
+  const sortedReceipts = [...receipts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
     <div className="flex-col" style={{ gap: '24px' }}>
@@ -123,89 +123,184 @@ export default function DashboardView({
                 </tr>
               </thead>
               <tbody>
-                {[...receipts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => (
-                  <tr key={r.id} style={{ background: selectedIds.has(r.id) ? 'rgba(239, 68, 68, 0.08)' : r.amount >= 100000 && workflowMode === 'corp' ? 'rgba(234, 179, 8, 0.06)' : undefined }}>
-                    <td style={{ padding: '4px 8px', width: '15%' }}>
-                      <input
-                        type="text"
-                        value={r.date}
-                        onChange={(e) => onUpdateReceipt(r.id, 'date', e.target.value)}
-                        className="editable-cell"
-                        placeholder="예: 04.05"
-                        style={{ textAlign: 'center' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px 8px' }}>
-                      <input
-                        type="text"
-                        value={r.store}
-                        onChange={(e) => onUpdateReceipt(r.id, 'store', e.target.value)}
-                        className="editable-cell"
-                        placeholder="사용처 입력"
-                        style={{ fontWeight: 500 }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px 8px' }}>
-                      <input
-                        type="text"
-                        value={r.category}
-                        onChange={(e) => onUpdateReceipt(r.id, 'category', e.target.value)}
-                        className="editable-cell"
-                        placeholder="사용내역 입력"
-                      />
-                    </td>
-                    <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600 }}>
-                      {r.type === 'expense' ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                          <span style={{ marginRight: '2px' }}>₩</span>
+                {sortedReceipts.map(r => {
+                  const isHighAmount = workflowMode === 'corp' && r.amount >= 100000;
+                  const er = isHighAmount ? entertainmentRecords.find(rec => rec.receiptId === r.id) : undefined;
+                  return (
+                    <React.Fragment key={r.id}>
+                      {/* 영수증 행 */}
+                      <tr style={{ background: selectedIds.has(r.id) ? 'rgba(239, 68, 68, 0.08)' : isHighAmount ? 'rgba(234, 179, 8, 0.06)' : undefined }}>
+                        <td style={{ padding: '4px 8px', width: '15%' }}>
                           <input
                             type="text"
-                            value={r.amount > 0 ? r.amount.toLocaleString() : ''}
-                            onChange={(e) => onUpdateReceipt(r.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
+                            value={r.date}
+                            onChange={(e) => onUpdateReceipt(r.id, 'date', e.target.value)}
                             className="editable-cell"
-                            style={{ textAlign: 'right', fontWeight: 600, width: '100px' }}
+                            placeholder="예: 04.05"
+                            style={{ textAlign: 'center' }}
                           />
-                        </div>
-                      ) : (
-                        <button onClick={() => onTogglePaymentType(r.id)} title="법인카드로 전환"
-                          style={{ background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 10px', fontSize: '11px', borderRadius: '4px' }}>
-                          카드로 →
-                        </button>
-                      )}
-                    </td>
-                    <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600 }}>
-                      {r.type !== 'expense' ? (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                          <span style={{ marginRight: '2px' }}>₩</span>
+                        </td>
+                        <td style={{ padding: '4px 8px' }}>
                           <input
                             type="text"
-                            value={r.amount > 0 ? r.amount.toLocaleString() : ''}
-                            onChange={(e) => onUpdateReceipt(r.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
+                            value={r.store}
+                            onChange={(e) => onUpdateReceipt(r.id, 'store', e.target.value)}
                             className="editable-cell"
-                            style={{ textAlign: 'right', fontWeight: 600, width: '100px' }}
+                            placeholder="사용처 입력"
+                            style={{ fontWeight: 500 }}
                           />
-                        </div>
-                      ) : (
-                        <button onClick={() => onTogglePaymentType(r.id)} title="현금으로 전환"
-                          style={{ background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 10px', fontSize: '11px', borderRadius: '4px' }}>
-                          ← 현금으로
-                        </button>
+                        </td>
+                        <td style={{ padding: '4px 8px' }}>
+                          <input
+                            type="text"
+                            value={r.category}
+                            onChange={(e) => onUpdateReceipt(r.id, 'category', e.target.value)}
+                            className="editable-cell"
+                            placeholder="사용내역 입력"
+                          />
+                        </td>
+                        <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600 }}>
+                          {r.type === 'expense' ? (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                              <span style={{ marginRight: '2px' }}>₩</span>
+                              <input
+                                type="text"
+                                value={r.amount > 0 ? r.amount.toLocaleString() : ''}
+                                onChange={(e) => onUpdateReceipt(r.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
+                                className="editable-cell"
+                                style={{ textAlign: 'right', fontWeight: 600, width: '100px' }}
+                              />
+                            </div>
+                          ) : (
+                            <button onClick={() => onTogglePaymentType(r.id)} title="법인카드로 전환"
+                              style={{ background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 10px', fontSize: '11px', borderRadius: '4px' }}>
+                              카드로 →
+                            </button>
+                          )}
+                        </td>
+                        <td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 600 }}>
+                          {r.type !== 'expense' ? (
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                              <span style={{ marginRight: '2px' }}>₩</span>
+                              <input
+                                type="text"
+                                value={r.amount > 0 ? r.amount.toLocaleString() : ''}
+                                onChange={(e) => onUpdateReceipt(r.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
+                                className="editable-cell"
+                                style={{ textAlign: 'right', fontWeight: 600, width: '100px' }}
+                              />
+                            </div>
+                          ) : (
+                            <button onClick={() => onTogglePaymentType(r.id)} title="현금으로 전환"
+                              style={{ background: 'transparent', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 10px', fontSize: '11px', borderRadius: '4px' }}>
+                              ← 현금으로
+                            </button>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'center', width: '36px' }}>
+                          <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => onToggleSelect(r.id)} />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            onClick={() => onDeleteReceipt(r.id)}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                            title="항목 삭제"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+
+                      {/* 접대사유서 입력 행 (100,000원 이상, corp 모드) */}
+                      {isHighAmount && er && (
+                        <tr>
+                          <td colSpan={7} style={{ padding: '0', borderTop: 'none' }}>
+                            <div style={{
+                              margin: '0 0 4px 0',
+                              padding: '10px 16px',
+                              background: 'rgba(234, 179, 8, 0.05)',
+                              borderLeft: '3px solid #eab308',
+                              borderBottom: '1px solid rgba(234, 179, 8, 0.2)',
+                            }}>
+                              <div style={{ fontSize: '11px', color: '#eab308', fontWeight: 700, marginBottom: '8px', letterSpacing: '0.5px' }}>
+                                ⚠ 접대사유서 (100,000원 이상)
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 80px 1fr 120px 2fr', gap: '8px', alignItems: 'end' }}>
+                                <div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px' }}>접대날짜</div>
+                                  <input
+                                    type="text"
+                                    value={er.date}
+                                    onChange={e => onUpdateEntertainmentRecord(er.id, 'date', e.target.value)}
+                                    className="editable-cell"
+                                    style={{ textAlign: 'center', width: '100%' }}
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px' }}>접대처</div>
+                                  <input
+                                    type="text"
+                                    value={er.counterpart}
+                                    onChange={e => onUpdateEntertainmentRecord(er.id, 'counterpart', e.target.value)}
+                                    className="editable-cell"
+                                    placeholder="접대처 입력"
+                                    style={{ width: '100%' }}
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px' }}>인원</div>
+                                  <input
+                                    type="text"
+                                    value={er.headcount}
+                                    onChange={e => onUpdateEntertainmentRecord(er.id, 'headcount', e.target.value)}
+                                    className="editable-cell"
+                                    placeholder="0명"
+                                    style={{ textAlign: 'center', width: '100%' }}
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px' }}>사용처</div>
+                                  <input
+                                    type="text"
+                                    value={er.place}
+                                    onChange={e => onUpdateEntertainmentRecord(er.id, 'place', e.target.value)}
+                                    className="editable-cell"
+                                    placeholder="사용처"
+                                    style={{ width: '100%' }}
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px' }}>금액</div>
+                                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', marginRight: '2px' }}>₩</span>
+                                    <input
+                                      type="text"
+                                      value={er.amount > 0 ? er.amount.toLocaleString() : ''}
+                                      onChange={e => onUpdateEntertainmentRecord(er.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
+                                      className="editable-cell"
+                                      style={{ textAlign: 'right', fontWeight: 600, flex: 1 }}
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px' }}>사유</div>
+                                  <input
+                                    type="text"
+                                    value={er.reason}
+                                    onChange={e => onUpdateEntertainmentRecord(er.id, 'reason', e.target.value)}
+                                    className="editable-cell"
+                                    placeholder="접대 사유 입력"
+                                    style={{ width: '100%' }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td style={{ textAlign: 'center', width: '36px' }}>
-                      <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => onToggleSelect(r.id)} />
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button
-                        onClick={() => onDeleteReceipt(r.id)}
-                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
-                        title="항목 삭제"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -215,99 +310,6 @@ export default function DashboardView({
           </div>
         )}
       </div>
-
-      {/* 접대사유서 입력 (corp 모드, 100,000원 이상 영수증이 있을 때) */}
-      {workflowMode === 'corp' && linkedEntRecords.length > 0 && (
-        <div className="glass-panel">
-          <div style={{ marginBottom: '16px' }}>
-            <h3 style={{ color: '#eab308', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              ⚠ 접대사유서 입력 필요
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '4px' }}>
-              100,000원 이상 영수증 {linkedEntRecords.length}건에 대해 접대사유서를 작성해주세요.
-              xlsx 다운로드 시 접대사유서 시트가 자동으로 추가됩니다.
-            </p>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>접대날짜</th>
-                  <th>접대처</th>
-                  <th>인원</th>
-                  <th>사용처</th>
-                  <th style={{ textAlign: 'right' }}>금액</th>
-                  <th>사유</th>
-                </tr>
-              </thead>
-              <tbody>
-                {linkedEntRecords.map(er => (
-                  <tr key={er.id}>
-                    <td style={{ padding: '4px 8px', width: '13%' }}>
-                      <input
-                        type="text"
-                        value={er.date}
-                        onChange={e => onUpdateEntertainmentRecord(er.id, 'date', e.target.value)}
-                        className="editable-cell"
-                        style={{ textAlign: 'center' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px 8px', width: '18%' }}>
-                      <input
-                        type="text"
-                        value={er.counterpart}
-                        onChange={e => onUpdateEntertainmentRecord(er.id, 'counterpart', e.target.value)}
-                        className="editable-cell"
-                        placeholder="접대처 입력"
-                      />
-                    </td>
-                    <td style={{ padding: '4px 8px', width: '10%' }}>
-                      <input
-                        type="text"
-                        value={er.headcount}
-                        onChange={e => onUpdateEntertainmentRecord(er.id, 'headcount', e.target.value)}
-                        className="editable-cell"
-                        placeholder="인원 수"
-                        style={{ textAlign: 'center' }}
-                      />
-                    </td>
-                    <td style={{ padding: '4px 8px' }}>
-                      <input
-                        type="text"
-                        value={er.place}
-                        onChange={e => onUpdateEntertainmentRecord(er.id, 'place', e.target.value)}
-                        className="editable-cell"
-                        placeholder="사용처"
-                      />
-                    </td>
-                    <td style={{ padding: '4px 8px', width: '14%', textAlign: 'right' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                        <span style={{ marginRight: '2px', color: 'var(--text-muted)' }}>₩</span>
-                        <input
-                          type="text"
-                          value={er.amount > 0 ? er.amount.toLocaleString() : ''}
-                          onChange={e => onUpdateEntertainmentRecord(er.id, 'amount', parseInt(e.target.value.replace(/,/g, '')) || 0)}
-                          className="editable-cell"
-                          style={{ textAlign: 'right', width: '100px', fontWeight: 600 }}
-                        />
-                      </div>
-                    </td>
-                    <td style={{ padding: '4px 8px' }}>
-                      <input
-                        type="text"
-                        value={er.reason}
-                        onChange={e => onUpdateEntertainmentRecord(er.id, 'reason', e.target.value)}
-                        className="editable-cell"
-                        placeholder="접대 사유 입력"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
